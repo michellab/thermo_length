@@ -153,7 +153,7 @@ class STReplica( object ):
             number of steps the integrator should compute between exchanges
             Default=1
         """
-        for i in xrange( nsteps ):
+        for i in range( nsteps ):
             self.trajectory.append(self.integrator.step())
 
     def change_temperature( self ):
@@ -189,17 +189,17 @@ class USReplica( object ):
             r_traj = []
             self.integrator.set_position(np.ones(self.ndim)*r.r0/np.sqrt(self.ndim))
             self.integrator.t_index = count
-            for i in xrange( nsteps ):
+            for i in range( nsteps ):
                 int_return = self.integrator.step(r)
                 bias = self.calculate_bias(self.integrator.x)
                 r_traj.append(np.hstack((int_return,bias)))
             count = count+1
             self.trajectory.append(r_traj)
-        print 'US simulation completed sucessfully!'
+        print ('US simulation completed sucessfully!')
 
     def calculate_bias( self, pos ):
         bias = np.zeros(self.n_therm_states)
-        for b in xrange(self.n_therm_states):
+        for b in range(self.n_therm_states):
             bias[b]=self.RS[b].energy(pos)
         return bias
 
@@ -209,7 +209,7 @@ def discretize( x, inner_edges ):
         return 0
     if x>=inner_edges[-1]:
         return inner_edges.shape[0]
-    for i in xrange( inner_edges.shape[0]-1 ):
+    for i in range( inner_edges.shape[0]-1 ):
         if ( inner_edges[i]<=x) and ( x< inner_edges[i+1] ):
             return i+1
 
@@ -236,16 +236,17 @@ def run_st_simulation():
     integrator.set_t_index(initial_t)
     integrator.set_position(initial_x)
     replica = STReplica(Z, integrator, kT )
-    for i in xrange(N_EXCHANGES):
-       replica.run(100)
-       replica.change_temperature()
+    for i in range(N_EXCHANGES):
+        replica.run(100)
+        replica.change_temperature()
     traj = np.array(replica.trajectory)
 
     n_traj_frames =  np.shape(replica.trajectory)[0] 
     fh = open( directory+"Traj.dat", 'w' )
-    for t in xrange( n_traj_frames ):
-       fh.write( "%6d %6d %+.6e" % ( discretize( traj[t,0], dwp.inner_edges ), traj[t,1], traj[t,2] / kT[traj[t,1]] ) )
-       fh.write( "\n" )
+    for t in range( n_traj_frames ):
+        fh.write("#position, disctraj index, therm index, bias potential")
+        fh.write( "%4f %6d %6d %+.6e" % (traj[t,0], discretize( traj[t,0], dwp.inner_edges ), traj[t,1], traj[t,2] / kT[traj[t,1]] ) )
+        fh.write( "\n" )
     fh.close()
     np.savetxt(directory+"kT.dat", kT)
 
@@ -257,15 +258,15 @@ def run_st_simulation():
     target = 0
     wham_f = os.path.join(directory,"b_K_i.dat")
     fh = open(wham_f, 'w')
-    for c in xrange( dwp.bin_centers.shape[0] ):
-       for i in xrange( n_therm_states ):
+    for c in range( dwp.bin_centers.shape[0] ):
+       for i in range( n_therm_states ):
            fh.write( " %+.6e" % ( dwp.energy( dwp.bin_centers[c] ) * (1.0/kT[i]-1.0/kT[target] ) ) )
        fh.write( "\n" )
     fh.close()
 
     #exact probability distribution for comparison
     fh = open( directory+"exact.dat", 'w' )
-    for c in xrange( dwp.bin_centers.shape[0] ):
+    for c in range( dwp.bin_centers.shape[0] ):
        p=np.exp(-dwp.energy( dwp.bin_centers[c] )* 1.0/kT[target])
        fh.write( "%4f %+.6e" % ( dwp.bin_centers[c] , p ) )
        fh.write("\n")
@@ -288,7 +289,7 @@ def run_us_simulation():
     #exact probability distribution for comparison
     e_file = os.path.join(directory,"exact.dat")
     fh = open( e_file, 'w' )
-    for c in xrange( dwp.bin_centers.shape[0] ):
+    for c in range( dwp.bin_centers.shape[0] ):
        p=np.exp(-dwp.energy( dwp.bin_centers[c] )* 1.0/kT[0])
        fh.write( "%4f %+.6e" % ( dwp.bin_centers[c] , p ) )
        fh.write("\n")
@@ -302,26 +303,27 @@ def run_us_simulation():
 
 
     restraints = []
-    for i in xrange(restraints_pos.shape[0]):
+    for i in range(restraints_pos.shape[0]):
        restraints.append(HarmonicRestraint(restraints_pos[i],restraint_k[i]))
     replica = USReplica(integrator, restraints)
     replica.run(nsteps)
-    for r in xrange(restraints_pos.shape[0]):
+    for r in range(restraints_pos.shape[0]):
        traj = np.array(replica.trajectory[r])
        n_traj_frames = traj.shape[0]
        r_file = os.path.join(directory,"Traj"+str(r)+".dat")
        fh =open(r_file, 'w')
-       for t in xrange( n_traj_frames ):
-           fh.write( "%6d %6d " % (discretize( traj[t,0], dwp.inner_edges ) , traj[t,1] ) )
-           for j in xrange(restraints_pos.shape[0]):
+       fh.write("#pos, discpos, thermindex, ukln\n")
+       for t in range( n_traj_frames ):
+           fh.write( "%4f %6d %6d " % (traj[t,0], discretize( traj[t,0], dwp.inner_edges ) , traj[t,1] ) )
+           for j in range(restraints_pos.shape[0]):
                fh.write("%+.6e " % (traj[t,3+j]/kT[0]))
            fh.write("\n")
        fh.close()
 
     wham_f = os.path.join(directory,"b_K_i.dat")
     fh = open(wham_f, 'w')
-    for c in xrange( dwp.bin_centers.shape[0] ):
-       for i in xrange( n_therm_states ):
+    for c in range( dwp.bin_centers.shape[0] ):
+       for i in range( n_therm_states ):
            fh.write( " %+.8e" % ( restraints[i].energy( dwp.bin_centers[c] ) / kT[0] ) )
        fh.write( "\n" )
     fh.close()
